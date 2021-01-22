@@ -22,21 +22,22 @@ class UsersController {
     }
 
     update = (req, res, next) => {
-        res.send(
-            this.service.update(req.body, req.params.id)
-        );
+        res
+            .send(
+                this.service.update(req.body, req.body.login)
+            );
     }
 
     
     delete = (req, res, next) => {
-        console.log(req.params)
         res
             .status(201)
             .send(this.service.deleteUser(req.params.id))
     }
 
     login = (req, res) => {
-        res.send(this.service.login(req.body.login, req.body.password));
+        res
+            .send(this.service.login(req.body.login, req.body.password));
     }
 }
 
