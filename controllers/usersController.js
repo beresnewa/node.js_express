@@ -32,7 +32,7 @@ class UsersController {
     delete = (req, res, next) => {
         res
             .status(201)
-            .send(this.service.deleteUser(req.params.id))
+            .send(this.service.deleteUser(req.body.login))
     }
 
     login = (req, res) => {

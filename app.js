@@ -2,7 +2,6 @@ const express = require('express');
 
 const bodyParser = require('body-parser');
 const usersRouter = require('./routes/usersRoutes.js');
-// const multer = require('multer');
 
 const app = express();
 
@@ -10,7 +9,6 @@ app.use('/public', express.static('public'));
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded(true));
-// app.use(multer().array());
 
 app.use('/users', usersRouter);
 

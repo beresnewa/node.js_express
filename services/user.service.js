@@ -32,6 +32,7 @@ class JSONUsersService {
         return this.usersList;
     }
 
+
     login = (login, password) => {
 
         let user  = this.usersList.find(user => {
@@ -53,14 +54,11 @@ class JSONUsersService {
     update = (dataToUpdate, login) => {
 
         const index = this.usersList.findIndex(user => user.login === login);
-        console.log(`этот юзер ${this.usersList[index]}`);
-        
         this.usersList[index] = {
             ...this.usersList[index],
             ...dataToUpdate
         }
-        console.log(`измененый ${this.usersList[index]}`);
-
+        //добавить чтобы логин брал из токена, а не передавать логин
         fs.writeFileSync("./users.json", JSON.stringify(this.usersList), (err) => { 
             if (err) 
               console.log(err); 
@@ -71,9 +69,16 @@ class JSONUsersService {
         return this.usersList[index];
     }
 
-    deleteUser = (id) => {
-        const index = this.usersList.findIndex(user => user.id === id);
-        this.usersList.splice(index, 1)
+    deleteUser = (login) => {
+        const index = this.usersList.findIndex(user => user.login === login);
+        this.usersList.splice(index, 1);
+        fs.writeFileSync("./users.json", JSON.stringify(this.usersList), (err) => { 
+            if (err) 
+              console.log(err); 
+            else { 
+              console.log("File written successfully\n");
+            }
+        });
         return this.usersList;
     }
 }
