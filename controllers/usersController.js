@@ -6,26 +6,25 @@ class UsersController {
     }
     service = userService;
 
-    get(req, res, next) {
+    get = (req, res) => {
         res
             .status(200)
-            .send({
-                users: this.service.getUsers(),
-                login: req.login
-            })
+            .send(
+                this.service.getUsers(),
+                // login: req.login
+            )
     }
 
     add = (req, res, next) => {
         res
             .status(201)
             .send(this.service.addUser(req.body))
+            
     }
 
     update = (req, res, next) => {
         res
-            .send(
-                this.service.update(req.body, req.body.login)
-            );
+            .send(this.service.update(req.body, req.body.login));
     }
 
     
