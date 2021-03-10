@@ -24,14 +24,15 @@ class UsersController {
 
     update = (req, res, next) => {
         res
-            .send(this.service.update(req.body, req.body.login));
+            .status(201)
+            .send(this.service.updateUser(req.params.id, req.body));
     }
 
     
     delete = (req, res, next) => {
         res
             .status(201)
-            .send(this.service.deleteUser(req.body.login))
+            .send(this.service.deleteUser(req.params.id))
     }
 
     login = (req, res) => {

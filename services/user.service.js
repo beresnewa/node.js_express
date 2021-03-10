@@ -1,130 +1,81 @@
 const mongoose = require("mongoose");
-
 const bcrypt = require('bcrypt');
 const fs = require('fs');
 const jwt = require('jsonwebtoken');
 
-// const users = require('../users.json');
+const User = require('../models/User');
 
 const saltRounds = 10;
-
-const Schema = mongoose.Schema;
-const userScheme = new Schema(
-    {name: String, login: String, password: String},
-    {versionKey: false}
-);
-const User = mongoose.model("User", userScheme);
-
-
 
 class JSONUsersService {
 
     getUsers = () => {
         User.find({}, function(err, docs){
-            mongoose.disconnect();
-            
             if(err) return console.log(err);
 
             console.log(`users: ${docs}`);
             return docs
         });
+
     }
 
-    addUser = () => {
-        let user = new User()
-        user.save(function (err) {
-            if (!err) {
-                return console.log("created");
-            }
-            else {
-                return console.log(err);
-            }
+    addUser = (user) => {
+        const hash = bcrypt.hashSync(user.password, saltRounds);
+        User.create({ ...user, password: hash }, function(err, doc){
+            if (err) return console.log(err);    
+            console.log("Сохранен объект user", doc);
         });
-        // User.create(user, function(err, doc){
-        //     mongoose.disconnect();
-              
-        //     if (err) return console.log(err);
-              
-        //     console.log("Сохранен объект user", doc);
-        // });
     } 
 
-    // addUser = (user) => {
-    //     const hash = bcrypt.hashSync(user.password, saltRounds);
-    //     this.usersList.push({ 
-    //         ...user,
-    //         password: hash
-    //     });
+    login = async (login, password) => {
         
-    //     fs.writeFileSync("./users.json", JSON.stringify(this.usersList), (err) => { 
-    //         if (err) 
-    //           console.log(err); 
-    //         else { 
-    //           console.log("File written successfully\n");
-    //         }
-    //     });
-    //     return this.usersList;
-    // }
+        const user = await User.findOne({ login: login }, function(err, doc){
+            if(err) return console.log(err);
+            console.log(doc);
+        });
 
+        if(!user) {
+            throw new Error ('Unable user');
+        }
 
-    login = (login, password) => {
-
-        let user  = this.usersList.find(user => {
-            
-            if (login === user.login) {
-                return true   
-            }
-        })
-        
-        if (bcrypt.compareSync(password, user.password)) {
-            const access = jwt.sign({login, type: 'access'}, 'secret');
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (isMatch) {
+            const access = jwt.sign({ login, type: 'access' }, 'secret');
+            console.log(access)
             return {
                 user,
                 access
             }
+
         }
+        if(!isMatch) {
+            throw new Error ('Unable to login');
+        }
+        return user;
+        // if (bcrypt.compareSync(password, user.password)) {
+        //     console.log(password, user.password)
+        //     const access = jwt.sign({login, type: 'access'}, 'secret');
+        //     return {
+        //         user,
+        //         access
+        //     }
+        // }
     }
 
-    update = (dataToUpdate, login) => {
-
-        const index = this.usersList.findIndex(user => user.login === login);
-        this.usersList[index] = {
-            ...this.usersList[index],
-            ...dataToUpdate
-        }
-        //добавить чтобы логин брал из токена, а не передавать логин
-        fs.writeFileSync("./users.json", JSON.stringify(this.usersList), (err) => { 
-            if (err) 
-              console.log(err); 
-            else { 
-              console.log("File written successfully\n");
-            }
-        });
-        return this.usersList[index];
-    }
-
-    deleteUser = (login) => {
-        User.findOneAndDelete(login, function(err, doc){
-            mongoose.disconnect();
-             
+    updateUser = (id, dataToUpdate) => {
+        console.log(`dataToUpdate: ${dataToUpdate}`)
+        User.findByIdAndUpdate(id, {name: dataToUpdate.name}, {new: true}, function(err, user){
             if(err) return console.log(err);
-             
+            console.log("Обновленный объект", user);
+        });
+    }
+
+    deleteUser = (id) => {
+        User.findOneAndDelete(id, function(err, doc){
+            if(err) return console.log(err);
             console.log("Удален пользователь ", doc);
         });
     }
-
-    // deleteUser = (login) => {
-    //     const index = this.usersList.findIndex(user => user.login === login);
-    //     this.usersList.splice(index, 1);
-    //     fs.writeFileSync("./users.json", JSON.stringify(this.usersList), (err) => { 
-    //         if (err) 
-    //           console.log(err); 
-    //         else { 
-    //           console.log("File written successfully\n");
-    //         }
-    //     });
-    //     return this.usersList;
-    // }
 }
 
 module.exports = new JSONUsersService();

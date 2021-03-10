@@ -1,27 +1,23 @@
 const jwt = require('jsonwebtoken');
-const users = require('../users.json');
+const User = require('../models/User');
 
-const auth = (token) => (req, res, next) => {
+const auth = async (req, res, next) => {
     
     try {
-        const [strategy , token] = req.headers['authorization'].split(' ');
-
-        const decodedData = jwt.verify(token, 'secret'); 
-
-        const findUser = users.find(user => {
-            if (decodedData.login === user.login) {
-                return true   
-            }
-        })
-        if(findUser) {
-            req.user = decodedData;
-            next();
-        } else {
-            res.status(401).send('Unauthorized')
+        const header = req.header('Authorization');
+        const token = header.replace('Bearer ', '');
+        const decoded = jwt.verify(token, 'secret');
+        const user = User.findOne({ _id: decoded.userId })
+        console.log(user)
+        if (user === null) {
+            throw new Error();
         }
+        req.user = user;
+        next();
+        return;
 
     } catch (err) {
-        res.status(401).send(err.message)
+        res.status(401).send(`Please authentificate: ${err.message}`)
     }
 }
 
