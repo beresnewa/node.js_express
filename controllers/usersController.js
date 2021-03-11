@@ -37,6 +37,7 @@ class UsersController {
 
     login = (req, res) => {
         res
+            .set("Access-Control-Allow-Origin", "http://localhost:8081")
             .send(this.service.login(req.body.login, req.body.password));
     }
 }

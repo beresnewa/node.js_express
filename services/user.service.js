@@ -41,7 +41,7 @@ class JSONUsersService {
         const isMatch = await bcrypt.compare(password, user.password);
         if (isMatch) {
             const access = jwt.sign({ login, type: 'access' }, 'secret');
-            console.log(access)
+            console.log(`token: ${access}`)
             return {
                 user,
                 access
