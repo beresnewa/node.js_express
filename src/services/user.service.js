@@ -11,11 +11,10 @@ class JSONUsersService {
 
     getUsers = async(query) => {
         // const { page = 1, limit = 1 } = query
-        console.log(query.sort)
         const filter = query.filter
         const page = query.page
         const limit = query.limit
-        const sort = query.sort ? `-${query.sort}` : ''
+        const sort = query.sort ? query.sort : ''
         
         let users = []
         let count = 0
@@ -54,6 +53,8 @@ class JSONUsersService {
         }
         const hash = bcrypt.hashSync(userReq.password, saltRounds);
         const user = await User.create({ ...userReq, password: hash });
+        user.avatars.push("http://localhost:3000/uploads/cat.png");
+        await user.save();
         const token = jwt.sign({ login: login, type: 'access' }, 'secret');
         return {
             user,
@@ -82,6 +83,7 @@ class JSONUsersService {
         const followers = await Promise.all(arrIdfollowers.map(async (followerId) => {
             return await User.findById(followerId);
         }));
+        
         return {
             followers,
             subscriptions,
