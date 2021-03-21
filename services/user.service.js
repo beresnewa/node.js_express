@@ -9,72 +9,162 @@ const saltRounds = 10;
 
 class JSONUsersService {
 
-    getUsers = () => {
-        User.find({}, function(err, docs){
-            if(err) return console.log(err);
+    getUsers = async(query) => {
+        // const { page = 1, limit = 1 } = query
+        console.log(query.sort)
+        const filter = query.filter
+        const page = query.page
+        const limit = query.limit
+        const sort = query.sort ? `-${query.sort}` : ''
+        
+        let users = []
+        let count = 0
 
-            console.log(`users: ${docs}`);
-            return docs
-        });
-
+        if(filter) {
+            users = await User.find({ name: filter })
+            .limit(limit * 1)
+            .skip((page - 1) * limit)
+            .sort(sort)
+            .exec();
+            count = await User.countDocuments({ name: filter });
+        } else {
+            users = await User.find({})
+            .limit(limit * 1)
+            .skip((page - 1) * limit)
+            .sort(sort)
+            .exec();
+            count = await User.countDocuments();
+        }
+        //     users = await User.find({})
+        //     .where('breed').in(arrSort)
+        //     .exec();
+        return {
+            users,
+            count,
+            totalPages: Math.ceil(count / limit),
+            currentPage: page
+        }
     }
 
-    addUser = (user) => {
-        const hash = bcrypt.hashSync(user.password, saltRounds);
-        User.create({ ...user, password: hash }, function(err, doc){
-            if (err) return console.log(err);    
-            console.log("Сохранен объект user", doc);
-        });
-    } 
+    addUser = async(userReq) => {
+        const login = userReq.login
+        const findedUser = await User.findOne({ login: login });
+        if(findedUser) {
+            throw new Error ('User already exists');
+        }
+        const hash = bcrypt.hashSync(userReq.password, saltRounds);
+        const user = await User.create({ ...userReq, password: hash });
+        const token = jwt.sign({ login: login, type: 'access' }, 'secret');
+        return {
+            user,
+            token
+        }  
+    }
+    
+    addFollowers = async(user, followerId) => {
+        const follower = await User.findById(followerId);
+        user.subscriptions.push(follower._id);
+        follower.followers.push(user._id);
+        await user.save();
+        await follower.save();
+        return {
+            user,
+            follower
+        }  
+    }
+    
+    getFollowers = async(user) => {
+        const arrIdfollowers = user.followers
+        const arrIdSubscriptions = user.subscriptions
+        const subscriptions = await Promise.all(arrIdSubscriptions.map(async (subscriptionId) => {
+            return await User.findById(subscriptionId);
+        }));
+        const followers = await Promise.all(arrIdfollowers.map(async (followerId) => {
+            return await User.findById(followerId);
+        }));
+        return {
+            followers,
+            subscriptions,
+            user
+        }
+    }
 
     login = async (login, password) => {
-        
-        const user = await User.findOne({ login: login }, function(err, doc){
-            if(err) return console.log(err);
-            console.log(doc);
-        });
-
+        const user = await User.findOne({ login: login });
+        console.log(user)
         if(!user) {
             throw new Error ('Unable user');
         }
-
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (isMatch) {
-            const access = jwt.sign({ login, type: 'access' }, 'secret');
-            console.log(`token: ${access}`)
+        
+        const isMatch = bcrypt.compareSync(password, user.password)
+        if(!isMatch) {
+            throw new Error ('Unable user');
+        }
+        const token = jwt.sign({ login, type: 'access' }, 'secret');
             return {
                 user,
-                access
+                token
             }
-
-        }
-        if(!isMatch) {
-            throw new Error ('Unable to login');
-        }
-        return user;
-        // if (bcrypt.compareSync(password, user.password)) {
-        //     console.log(password, user.password)
-        //     const access = jwt.sign({login, type: 'access'}, 'secret');
-        //     return {
-        //         user,
-        //         access
-        //     }
-        // }
     }
-
-    updateUser = (id, dataToUpdate) => {
-        console.log(`dataToUpdate: ${dataToUpdate}`)
-        User.findByIdAndUpdate(id, {name: dataToUpdate.name}, {new: true}, function(err, user){
+    
+    updateUser = async(id, dataToUpdate) => {
+        const updateUser = await User.findByIdAndUpdate(id, {name: dataToUpdate.name}, {new: true}, function(err, user){
             if(err) return console.log(err);
             console.log("Обновленный объект", user);
         });
+        return updateUser
     }
 
     deleteUser = (id) => {
-        User.findOneAndDelete(id, function(err, doc){
+        User.findOneAndDelete((id), function(err, doc){
             if(err) return console.log(err);
             console.log("Удален пользователь ", doc);
+            return doc
         });
+    }
+    
+    uploadPhoto = async (file, user) => {
+        const linkToImage = 'http://localhost:3000/' + file.path
+        if(!file) {
+            throw new Error ('ошибка загрузки');
+        } else {
+            console.log(file);
+            console.log("Файл загружен");
+
+            user.images.push(linkToImage)
+            await user.save();
+            return {
+                user
+            }
+        }
+        
+    }
+    uploadAvatar = async (file, user) => {
+        const linkToImage = 'http://localhost:3000/' + file.path
+        if(!file) {
+            throw new Error ('ошибка загрузки');
+        } else {
+            console.log(file);
+            console.log("Файл загружен");
+            if(user.avatars.length !== 0) {
+                user.avatars.splice(0, 1)
+                user.avatars.push(linkToImage)
+            } else {
+                user.avatars.push(linkToImage)
+            }
+            await user.save();
+            return {
+                user
+            }
+        }
+    }
+
+    deleteImage = async (indexImage, user) => {
+        user.images.splice(indexImage, 1)
+        await user.save()
+        return {
+            user
+        }
     }
 }
 

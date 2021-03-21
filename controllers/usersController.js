@@ -6,39 +6,101 @@ class UsersController {
     }
     service = userService;
 
-    get = (req, res) => {
-        res
+    get = async(req, res) => {
+        try {
+            res
             .status(200)
-            .send(
-                this.service.getUsers(),
-                // login: req.login
-            )
+            .send(await this.service.getUsers(req.query))
+        } catch(error) {
+            res.status(400).send({error:error.message});
+            console.log(error)
+        }  
     }
 
-    add = (req, res, next) => {
-        res
+    add = async(req, res, next) => {
+        try {
+            res
             .status(201)
-            .send(this.service.addUser(req.body))
-            
+            .send(await this.service.addUser(req.body))
+        } catch(error) {
+            res.status(400).send({error:error.message});
+        }       
     }
 
-    update = (req, res, next) => {
-        res
+    update = async(req, res, next) => {
+        try {
+            res
             .status(201)
-            .send(this.service.updateUser(req.params.id, req.body));
+            .send(await this.service.updateUser(req.params.id, req.body));
+        } catch(error) {
+            res.status(400).send({error:error.message});
+        }  
     }
 
-    
-    delete = (req, res, next) => {
-        res
+    delete = async(req, res, next) => {
+        try {
+            res
             .status(201)
-            .send(this.service.deleteUser(req.params.id))
+            .send( await this.service.deleteUser(req.params.id))
+        } catch(error) {
+            res.status(400).send({error:error.message});
+        }  
     }
 
-    login = (req, res) => {
-        res
-            .set("Access-Control-Allow-Origin", "http://localhost:8081")
-            .send(this.service.login(req.body.login, req.body.password));
+    login = async(req, res) => {
+        try {
+            res
+            .send(await this.service.login(req.body.login, req.body.password));
+        } catch(error) {
+            res.status(400).send({error:error.message});
+        } 
+    }
+
+    addFollowers = async(req, res) => {
+        try {
+            res
+            .send(await this.service.addFollowers(req.user, req.body.followerId))
+        } catch(error) {
+            res.status(400).send({error:error.message});
+        } 
+    }
+
+    getFollowers = async(req, res) => {
+        try {
+            res
+            .send(await this.service.getFollowers(req.user))
+        } catch(error) {
+            res.status(400).send({error:error.message});
+        } 
+    }
+
+    uploadPhoto = async (req, res, next ) => {
+        try {
+            res
+            .status(201)
+            .send(await this.service.uploadPhoto(req.file, req.user))
+        } catch(error) {
+            res.status(400).send({error:error.message});
+        } 
+    }
+    uploadAvatar = async (req, res, next ) => {
+        try {
+            res
+            .status(201)
+            .send(await this.service.uploadAvatar(req.file, req.user))
+        } catch(error) {
+            res.status(400).send({error:error.message});
+        } 
+    }
+
+    deleteImage = async (req, res) => {
+        try {
+            res
+            .status(201)
+            .send(await this.service.deleteImage(req.body.indexImage, req.user))
+        } catch(error) {
+            res.status(400).send({error:error.message});
+        } 
     }
 }
 

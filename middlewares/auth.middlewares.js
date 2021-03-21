@@ -7,8 +7,8 @@ const auth = async (req, res, next) => {
         const header = req.header('Authorization');
         const token = header.replace('Bearer ', '');
         const decoded = jwt.verify(token, 'secret');
-        const user = User.findOne({ _id: decoded.userId })
-        console.log(user)
+        const user = await User.findOne({ login: decoded.login })
+    
         if (user === null) {
             throw new Error();
         }
@@ -17,7 +17,7 @@ const auth = async (req, res, next) => {
         return;
 
     } catch (err) {
-        res.status(401).send(`Please authentificate: ${err.message}`)
+        res.status(401).send(`Please authentificate!: ${err.message}`)
     }
 }
 
