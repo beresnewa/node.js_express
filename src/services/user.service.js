@@ -9,25 +9,25 @@ const saltRounds = 10;
 
 class JSONUsersService {
 
-    getUsers = async(query) => {
+    getUsers = async(reqUser, query) => {
         // const { page = 1, limit = 1 } = query
         const filter = query.filter
         const page = query.page
         const limit = query.limit
         const sort = query.sort ? query.sort : ''
         
-        let users = []
+        let allUsers = []
         let count = 0
 
         if(filter) {
-            users = await User.find({ name: filter })
+            allUsers = await User.find({ name: filter })
             .limit(limit * 1)
             .skip((page - 1) * limit)
             .sort(sort)
             .exec();
             count = await User.countDocuments({ name: filter });
         } else {
-            users = await User.find({})
+            allUsers = await User.find({})
             .limit(limit * 1)
             .skip((page - 1) * limit)
             .sort(sort)
@@ -37,6 +37,10 @@ class JSONUsersService {
         //     users = await User.find({})
         //     .where('breed').in(arrSort)
         //     .exec();
+        let users = allUsers.filter(user => { 
+            return user._id.toString() !== reqUser._id.toString()
+        })
+        
         return {
             users,
             count,
@@ -62,18 +66,40 @@ class JSONUsersService {
         }  
     }
     
-    addFollowers = async(user, followerId) => {
-        const follower = await User.findById(followerId);
-        user.subscriptions.push(follower._id);
-        follower.followers.push(user._id);
+    addFollowers = async(user, subscriptionId) => {
+        const subscription = await User.findById(subscriptionId);
+        user.subscriptions.push(subscription._id);
+        subscription.followers.push(user._id);
         await user.save();
-        await follower.save();
+        await subscription.save();
         return {
             user,
-            follower
+            subscription
         }  
     }
-    
+    deleteSubscrption = async(user, id) => {
+        const subscription = await User.findById(id);
+        const arrIdfollowers = subscription.followers
+        const indexF = arrIdfollowers.indexOf(user._id)
+        subscription.followers.splice(indexF, 1)
+
+        const arrIdSubscriptions = user.subscriptions
+        const indexS = arrIdSubscriptions.indexOf(id)
+        user.subscriptions.splice(indexS, 1)
+
+        await user.save();
+        await subscription.save();
+
+        const subscriptions = await Promise.all(arrIdSubscriptions.map(async (subscriptionId) => {
+            return await User.findById(subscriptionId);
+        }));
+
+        return {
+            user,
+            subscriptions,
+            subscription
+        }  
+    }
     getFollowers = async(user) => {
         const arrIdfollowers = user.followers
         const arrIdSubscriptions = user.subscriptions

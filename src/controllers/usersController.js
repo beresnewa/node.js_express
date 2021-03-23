@@ -10,7 +10,7 @@ class UsersController {
         try {
             res
             .status(200)
-            .send(await this.service.getUsers(req.query))
+            .send(await this.service.getUsers(req.user, req.query))
         } catch(error) {
             res.status(400).send({error:error.message});
             console.log(error)
@@ -59,7 +59,16 @@ class UsersController {
     addFollowers = async(req, res) => {
         try {
             res
-            .send(await this.service.addFollowers(req.user, req.body.followerId))
+            .send(await this.service.addFollowers(req.user, req.body.id))
+        } catch(error) {
+            res.status(400).send({error:error.message});
+        } 
+    }
+
+    deleteSubscrption = async(req, res) => {
+        try {
+            res
+            .send(await this.service.deleteSubscrption(req.user, req.body.id))
         } catch(error) {
             res.status(400).send({error:error.message});
         } 

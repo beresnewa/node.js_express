@@ -14,6 +14,7 @@ router
     .post('/upload/photo', auth, upload.single("filedata"), controller.uploadPhoto)
     .post('/upload/avatar', auth, upload.single("filedata"), controller.uploadAvatar)
     .post('/', auth, controller.deleteImage)
+    .post('/subscription', auth, controller.deleteSubscrption)
 
     .put('/followers', auth, controller.addFollowers)
     .put('/:id', auth, controller.update)
