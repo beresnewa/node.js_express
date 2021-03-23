@@ -111,6 +111,15 @@ class UsersController {
             res.status(400).send({error:error.message});
         } 
     }
+
+    getFollower = async(req, res) => {
+        try {
+            res
+            .send(await this.service.getFollower(req.body.id))
+        } catch(error) {
+            res.status(400).send({error:error.message});
+        } 
+    }
 }
 
 module.exports = new UsersController();

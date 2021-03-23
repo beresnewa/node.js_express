@@ -194,6 +194,13 @@ class JSONUsersService {
             user
         }
     }
+
+    getFollower = async (id) => {
+        const follower = await User.findById(id)
+        return {
+            follower
+        }
+    }
 }
 
 module.exports = new JSONUsersService();
